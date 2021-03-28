@@ -13,7 +13,7 @@ if (!fs.existsSync(path0))
     fs.writeFileSync(path0, `{
     "token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "password":"xxxxxxxx",
-    "domain":"ddu6.xyz",
+    "base":"https://ddu6.xyz/services/ph-get/",
     "threads":2,
     "congestionSleep":3,
     "errSleep":5,

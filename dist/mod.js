@@ -5,7 +5,7 @@ const https = require("https");
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-let domain = 'ddu6.xyz';
+let base = 'https://ddu6.xyz/services/ph-get/';
 let threads = 2;
 let congestionSleep = 3;
 let errSleep = 5;
@@ -117,7 +117,7 @@ async function basicallyGet(url, params = {}, cookie = '', referer = '') {
     return result;
 }
 async function getResult(path, params = {}) {
-    const result = await basicallyGet(`https://${domain}/services/ph-get/${path}`, params);
+    const result = await basicallyGet(`${base}${path}`, params);
     if (typeof result === 'number')
         return result;
     const { status, body } = result;
@@ -300,7 +300,7 @@ async function rescue(period, depth, token, password) {
 async function main() {
     const config = JSON.parse(fs.readFileSync(path.join(__dirname, '../config.json'), { encoding: 'utf8' }));
     const { token, password } = config;
-    domain = config.domain;
+    base = config.base;
     threads = config.threads;
     congestionSleep = config.congestionSleep;
     errSleep = config.errSleep;

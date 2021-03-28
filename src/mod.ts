@@ -2,7 +2,7 @@ import * as https from 'https'
 import * as http from 'http'
 import * as fs from 'fs'
 import * as path from 'path'
-let domain='ddu6.xyz'
+let base='https://ddu6.xyz/services/ph-get/'
 let threads=2
 let congestionSleep=3
 let errSleep=5
@@ -21,7 +21,7 @@ interface Res{
 interface Config{
     token:string
     password:string
-    domain:string
+    base:string
     threads:number
     congestionSleep:number
     errSleep:number
@@ -146,7 +146,7 @@ async function basicallyGet(url:string,params:Record<string,string>={},cookie=''
     return result
 }
 async function getResult(path:string,params:Record<string,string>={}){
-    const result=await basicallyGet(`https://${domain}/services/ph-get/${path}`,params)
+    const result=await basicallyGet(`${base}${path}`,params)
     if(typeof result==='number')return result
     const {status,body}=result
     if(status!==200)return status
@@ -300,7 +300,7 @@ async function rescue(period:number,depth:number,token:string,password:string){
 export async function main(){
     const config:Config=JSON.parse(fs.readFileSync(path.join(__dirname,'../config.json'),{encoding:'utf8'}))
     const {token,password}=config
-    domain=config.domain
+    base=config.base
     threads=config.threads
     congestionSleep=config.congestionSleep
     errSleep=config.errSleep
