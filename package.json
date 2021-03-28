@@ -1,0 +1,22 @@
+{
+  "name": "ph-rescue",
+  "version": "0.1.0",
+  "description": "",
+  "scripts": {
+    "init": "node dist/init.js",
+    "start": "node dist/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ddu6/ph-rescue.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ddu6/ph-rescue/issues"
+  },
+  "homepage": "https://github.com/ddu6/ph-rescue#readme",
+  "devDependencies": {
+    "@types/node": "^14.14.31"
+  }
+}
