@@ -5,15 +5,7 @@ const https = require("https");
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
-let base = 'https://ddu6.xyz/services/ph-get/';
-let threads = 2;
-let congestionSleep = 3;
-let errSleep = 5;
-let recaptchaSleep = 60;
-let timeout = 10;
-let interval = 1;
-let period = 60;
-let depth = 10;
+const init_1 = require("./init");
 function getDate() {
     const date = new Date();
     return [date.getMonth() + 1, date.getDate()].map(val => val.toString().padStart(2, '0')).join('-') + ' ' + [date.getHours(), date.getMinutes(), date.getSeconds()].map(val => val.toString().padStart(2, '0')).join(':') + ':' + date.getMilliseconds().toString().padStart(3, '0');
@@ -63,7 +55,7 @@ async function basicallyGet(url, params = {}, cookie = '', referer = '') {
     const result = await new Promise((resolve) => {
         setTimeout(() => {
             resolve(500);
-        }, timeout * 1000);
+        }, init_1.config.timeout * 1000);
         const httpsOrHTTP = url.startsWith('https://') ? https : http;
         httpsOrHTTP.get(url, {
             headers: headers
@@ -117,7 +109,7 @@ async function basicallyGet(url, params = {}, cookie = '', referer = '') {
     return result;
 }
 async function getResult(path, params = {}) {
-    const result = await basicallyGet(`${base}${path}`, params);
+    const result = await basicallyGet(`${init_1.config.base}${path}`, params);
     if (typeof result === 'number')
         return result;
     const { status, body } = result;
@@ -135,90 +127,13 @@ async function getResult(path, params = {}) {
     }
     return 500;
 }
-async function basicallyGetComments(id, token, password) {
-    const data = await getResult(`c${id}`, {
+async function updateFirstPage(token, password) {
+    const result = await getResult(`p1`, {
         update: '',
+        key: '',
         token: token,
         password: password
     });
-    return data;
-}
-async function basicallyGetLocalComments(id, token, password) {
-    const data = await getResult(`local/c${id}`, {
-        token: token,
-        password: password
-    });
-    return data;
-}
-async function basicallyGetPage(key, page, token, password) {
-    const data = await getResult(`p${page}`, {
-        update: '',
-        key: key,
-        token: token,
-        password: password
-    });
-    return data;
-}
-async function basicallyUpdateComments(id, reply, token, password) {
-    if (reply === 0)
-        return 200;
-    const result0 = await basicallyGetLocalComments(id, token, password);
-    if (result0 === 401)
-        return 401;
-    if (result0 === 503)
-        return 503;
-    if (typeof result0 === 'number')
-        return 500;
-    const data0 = result0.data;
-    const length0 = data0.length;
-    if (reply >= 0 && length0 >= reply)
-        return 200;
-    const result1 = await basicallyGetComments(id, token, password);
-    if (result1 === 401)
-        return 401;
-    if (result1 === 503)
-        return 503;
-    if (result1 === 404)
-        return 404;
-    if (typeof result1 === 'number')
-        return 500;
-    const data1 = result1.data;
-    for (let i = 0; i < data1.length; i++) {
-        const { text } = data1[i];
-        if (typeof text === 'string' && text.startsWith('[Helper]'))
-            return 423;
-    }
-    semilog(`c${id} updated.`);
-    return 200;
-}
-async function updateComments(id, reply, token, password) {
-    const timeLimit = Date.now() + period * 60000;
-    while (true) {
-        if (Date.now() > timeLimit)
-            return 500;
-        const result = await basicallyUpdateComments(id, reply, token, password);
-        if (result === 503) {
-            semilog('503.');
-            await sleep(congestionSleep);
-            continue;
-        }
-        if (result === 500) {
-            semilog('500.');
-            await sleep(errSleep);
-            continue;
-        }
-        if (result === 423) {
-            semilog('423.');
-            await sleep(recaptchaSleep);
-            continue;
-        }
-        if (result === 401)
-            return 401;
-        return 200;
-    }
-}
-async function basicallyUpdatePage(key, page, token, password) {
-    const result = await basicallyGetPage(key, page, token, password);
     if (result === 401)
         return 401;
     if (result === 503)
@@ -227,88 +142,27 @@ async function basicallyUpdatePage(key, page, token, password) {
         return 404;
     if (typeof result === 'number')
         return 500;
-    const data = result.data;
-    let promises = [];
-    let subIds = [];
-    for (let i = 0; i < data.length; i++) {
-        const { pid, reply } = data[i];
-        promises.push(updateComments(pid, Number(reply), token, password));
-        subIds.push(pid);
-        if (promises.length < threads && i < data.length - 1)
-            continue;
-        const result = await Promise.all(promises);
-        if (result.includes(401))
-            return 401;
-        if (result.includes(500))
-            return 500;
-        semilog(`#${subIds.join(',')} toured.`);
-        promises = [];
-        subIds = [];
-        await sleep(interval);
-    }
     return 200;
 }
-async function updatePage(key, page, token, password) {
-    const timeLimit = Date.now() + period * 60000;
+async function rescue(period, token, password) {
     while (true) {
-        if (Date.now() > timeLimit)
-            return 500;
-        const result = await basicallyUpdatePage(key, page, token, password);
-        if (result === 503) {
-            semilog('503.');
-            await sleep(congestionSleep);
-            continue;
-        }
-        if (result === 500) {
-            semilog('500.');
-            await sleep(errSleep);
-            continue;
-        }
-        if (result === 401)
-            return 401;
-        return 200;
-    }
-}
-async function updatePages(key, pages, token, password) {
-    for (let i = 0; i < pages.length; i++) {
-        const page = pages[i];
-        const result = await updatePage(key, page, token, password);
-        if (result === 401)
-            return 401;
-        if (result === 500)
-            return 500;
-        semilog(`p${page} toured.`);
-    }
-    return 200;
-}
-async function rescue(period, depth, token, password) {
-    while (true) {
-        const result = await updatePages('', Array.from({ length: depth }, (v, i) => i + 1), token, password);
+        const result = await updateFirstPage(token, password);
         if (result === 401) {
             log('401.');
             return;
         }
-        if (result === 500) {
-            log('Fail to rescue.');
+        if (result === 200) {
+            log('Rescurd.');
         }
         else {
-            log('Rescurd.');
+            log(`${result}. Fail to rescue.`);
         }
         await sleep(period * 60);
     }
 }
 async function main() {
-    const config = JSON.parse(fs.readFileSync(path.join(__dirname, '../config.json'), { encoding: 'utf8' }));
-    const { token, password } = config;
-    base = config.base;
-    threads = config.threads;
-    congestionSleep = config.congestionSleep;
-    errSleep = config.errSleep;
-    recaptchaSleep = config.recaptchaSleep;
-    timeout = config.timeout;
-    interval = config.interval;
-    period = config.period;
-    depth = config.depth;
-    await rescue(period, depth, token, password);
+    Object.assign(init_1.config, JSON.parse(fs.readFileSync(path.join(__dirname, '../config.json'), { encoding: 'utf8' })));
+    const { token, password, period } = init_1.config;
+    await rescue(period, token, password);
 }
 exports.main = main;
