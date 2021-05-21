@@ -234,8 +234,6 @@ async function basicallyUpdatePage(key, page, token, password) {
         return 403;
     if (result === 503)
         return 503;
-    if (result === 404)
-        return 404;
     if (typeof result === 'number')
         return 500;
     const data = result.data;
@@ -259,7 +257,10 @@ async function basicallyUpdatePage(key, page, token, password) {
         subIds = [];
         await sleep(init_1.config.interval);
     }
-    return 200;
+    return {
+        maxId: Number(data[0].pid),
+        minId: Number(data[data.length - 1].pid)
+    };
 }
 async function updatePage(key, page, token, password) {
     for (let i = 0; i < 10; i++) {
@@ -282,27 +283,34 @@ async function updatePage(key, page, token, password) {
             return 401;
         if (result === 403)
             return 403;
-        return 200;
+        return result;
     }
     return 500;
 }
-async function updatePages(key, pages, token, password) {
-    for (let i = 0; i < pages.length; i++) {
-        const page = pages[i];
-        const result = await updatePage(key, page, token, password);
+let maxId = 0;
+async function updatePages(token, password) {
+    let tmpMaxId = 0;
+    let minId = 0;
+    for (let i = 1; i <= init_1.config.depth || minId + 15 * init_1.config.depth > maxId && maxId !== 0; i++) {
+        const result = await updatePage('', i, token, password);
         if (result === 401)
             return 401;
         if (result === 403)
             return 403;
         if (result === 500)
             return 500;
-        log(`p${page} toured.`);
+        if (i == 0) {
+            tmpMaxId = result.maxId;
+        }
+        minId = result.minId;
+        log(`p${i} toured.`);
     }
+    maxId = tmpMaxId;
     return 200;
 }
 async function rescue(period, token, password) {
     while (true) {
-        const result = await updatePages('', Array.from({ length: init_1.config.depth }, (v, i) => i + 1), token, password);
+        const result = await updatePages(token, password);
         if (result === 401) {
             log('401.');
             return;
