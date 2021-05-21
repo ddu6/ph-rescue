@@ -6,6 +6,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const init_1 = require("./init");
+const open = require("open");
+let unlocking = false;
 function getDate() {
     const date = new Date();
     return [date.getMonth() + 1, date.getDate()].map(val => val.toString().padStart(2, '0')).join('-') + ' ' + [date.getHours(), date.getMinutes(), date.getSeconds()].map(val => val.toString().padStart(2, '0')).join(':') + ':' + date.getMilliseconds().toString().padStart(3, '0');
@@ -127,28 +129,186 @@ async function getResult(path, params = {}) {
     }
     return 500;
 }
-async function updateFirstPage(token, password) {
-    const result = await getResult(`p1`, {
+async function basicallyGetComments(id, token, password) {
+    const data = await getResult(`cs${id}`, {
         update: '',
-        key: '',
         token: token,
         password: password
     });
+    return data;
+}
+async function basicallyGetLocalComments(id, token, password) {
+    const data = await getResult(`local/cs${id}`, {
+        token: token,
+        password: password
+    });
+    return data;
+}
+async function basicallyGetPage(key, page, token, password) {
+    const data = await getResult(`p${page}`, {
+        update: '',
+        key: key,
+        token: token,
+        password: password
+    });
+    return data;
+}
+async function basicallyUpdateComments(id, reply, token, password) {
+    if (reply === 0)
+        return 200;
+    const result0 = await basicallyGetLocalComments(id, token, password);
+    if (result0 === 401)
+        return 401;
+    if (result0 === 403)
+        return 403;
+    if (result0 === 503)
+        return 503;
+    if (typeof result0 === 'number')
+        return 500;
+    const data0 = result0.data;
+    const length0 = data0.length;
+    if (reply >= 0 && length0 >= reply)
+        return 200;
+    const result1 = await basicallyGetComments(id, token, password);
+    if (result1 === 423)
+        return 423;
+    if (result1 === 401)
+        return 401;
+    if (result1 === 403)
+        return 403;
+    if (result1 === 503)
+        return 503;
+    if (result1 === 404)
+        return 404;
+    if (typeof result1 === 'number')
+        return 500;
+    const data1 = result1.data;
+    for (let i = 0; i < data1.length; i++) {
+        const { text } = data1[i];
+        if (typeof text === 'string' && text.startsWith('[Helper]'))
+            return 423;
+    }
+    const cid = Math.max(...data1.map(val => Number(val.cid)));
+    const timestamp = Math.max(...data1.map(val => Number(val.timestamp)));
+    log(`cs${id} updated to c${cid} which is in ${prettyDate(timestamp)}.`);
+    return 200;
+}
+async function updateComments(id, reply, token, password) {
+    for (let i = 0; i < 10; i++) {
+        if (unlocking) {
+            await sleep(init_1.config.recaptchaSleep);
+            continue;
+        }
+        const result = await basicallyUpdateComments(id, reply, token, password);
+        if (result === 503) {
+            log('503.');
+            await sleep(init_1.config.congestionSleep);
+            continue;
+        }
+        if (result === 500) {
+            log('500.');
+            await sleep(init_1.config.errSleep);
+            continue;
+        }
+        if (result === 423) {
+            log('423.');
+            if (init_1.config.autoUnlock) {
+                await unlock();
+            }
+            await sleep(init_1.config.recaptchaSleep);
+            continue;
+        }
+        if (result === 401)
+            return 401;
+        if (result === 403)
+            return 403;
+        return 200;
+    }
+    return 500;
+}
+async function basicallyUpdatePage(key, page, token, password) {
+    const result = await basicallyGetPage(key, page, token, password);
     if (result === 401)
         return 401;
+    if (result === 403)
+        return 403;
     if (result === 503)
         return 503;
     if (result === 404)
         return 404;
     if (typeof result === 'number')
         return 500;
+    const data = result.data;
+    let promises = [];
+    let subIds = [];
+    for (let i = 0; i < data.length; i++) {
+        const { pid, reply } = data[i];
+        promises.push(updateComments(pid, Number(reply), token, password));
+        subIds.push(pid);
+        if (promises.length < init_1.config.threads && i < data.length - 1)
+            continue;
+        const result = await Promise.all(promises);
+        if (result.includes(401))
+            return 401;
+        if (result.includes(403))
+            return 403;
+        if (result.includes(500))
+            return 500;
+        log(`#${subIds.join(',')} toured.`);
+        promises = [];
+        subIds = [];
+        await sleep(init_1.config.interval);
+    }
+    return 200;
+}
+async function updatePage(key, page, token, password) {
+    for (let i = 0; i < 10; i++) {
+        if (unlocking) {
+            await sleep(init_1.config.recaptchaSleep);
+            continue;
+        }
+        const result = await basicallyUpdatePage(key, page, token, password);
+        if (result === 503) {
+            log('503.');
+            await sleep(init_1.config.congestionSleep);
+            continue;
+        }
+        if (result === 500) {
+            log('500.');
+            await sleep(init_1.config.errSleep);
+            continue;
+        }
+        if (result === 401)
+            return 401;
+        if (result === 403)
+            return 403;
+        return 200;
+    }
+    return 500;
+}
+async function updatePages(key, pages, token, password) {
+    for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const result = await updatePage(key, page, token, password);
+        if (result === 401)
+            return 401;
+        if (result === 403)
+            return 403;
+        if (result === 500)
+            return 500;
+        log(`p${page} toured.`);
+    }
     return 200;
 }
 async function rescue(period, token, password) {
     while (true) {
-        const result = await updateFirstPage(token, password);
+        const result = await updatePages('', Array.from({ length: init_1.config.depth }, (v, i) => i + 1), token, password);
         if (result === 401) {
             log('401.');
+            return;
+        }
+        if (result === 403) {
+            log('403.');
             return;
         }
         if (result === 200) {
@@ -159,6 +319,33 @@ async function rescue(period, token, password) {
         }
         await sleep(period * 60);
     }
+}
+async function unlock() {
+    if (unlocking)
+        return;
+    unlocking = true;
+    const cp = await open('https://pkuhelper.pku.edu.cn/hole');
+    await sleep(init_1.config.unlockingSleep);
+    cp.kill();
+    unlocking = false;
+}
+function prettyDate(stamp) {
+    const date = new Date(Number(stamp + '000'));
+    const now = new Date();
+    const year = date.getFullYear();
+    const nowYear = now.getFullYear();
+    const md = (date.getMonth() + 1) + '/' +
+        date.getDate();
+    const nowMD = (now.getMonth() + 1) + '/' +
+        now.getDate();
+    const hms = date.getHours() + ':' +
+        date.getMinutes() + ':' +
+        date.getSeconds();
+    if (year !== nowYear)
+        return hms + ' ' + year + '/' + md;
+    if (nowMD !== md)
+        return hms + ' ' + md;
+    return hms;
 }
 async function main() {
     Object.assign(init_1.config, JSON.parse(fs.readFileSync(path.join(__dirname, '../config.json'), { encoding: 'utf8' })));
