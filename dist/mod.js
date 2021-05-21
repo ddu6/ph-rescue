@@ -190,7 +190,7 @@ async function basicallyUpdateComments(id, reply, token, password) {
     }
     const cid = Math.max(...data1.map(val => Number(val.cid)));
     const timestamp = Math.max(...data1.map(val => Number(val.timestamp)));
-    log(`cs${id} updated to c${cid} which is in ${prettyDate(timestamp)}.`);
+    semilog(`cs${id} updated to c${cid} which is in ${prettyDate(timestamp)}.`);
     return 200;
 }
 async function updateComments(id, reply, token, password) {
@@ -201,17 +201,17 @@ async function updateComments(id, reply, token, password) {
         }
         const result = await basicallyUpdateComments(id, reply, token, password);
         if (result === 503) {
-            log('503.');
+            semilog('503.');
             await sleep(init_1.config.congestionSleep);
             continue;
         }
         if (result === 500) {
-            log('500.');
+            semilog('500.');
             await sleep(init_1.config.errSleep);
             continue;
         }
         if (result === 423) {
-            log('423.');
+            semilog('423.');
             if (init_1.config.autoUnlock) {
                 await unlock();
             }
@@ -252,7 +252,7 @@ async function basicallyUpdatePage(key, page, token, password) {
             return 403;
         if (result.includes(500))
             return 500;
-        log(`#${subIds.join(',')} toured.`);
+        semilog(`#${subIds.join(',')} toured.`);
         promises = [];
         subIds = [];
         await sleep(init_1.config.interval);
@@ -270,12 +270,12 @@ async function updatePage(key, page, token, password) {
         }
         const result = await basicallyUpdatePage(key, page, token, password);
         if (result === 503) {
-            log('503.');
+            semilog('503.');
             await sleep(init_1.config.congestionSleep);
             continue;
         }
         if (result === 500) {
-            log('500.');
+            semilog('500.');
             await sleep(init_1.config.errSleep);
             continue;
         }
@@ -303,7 +303,7 @@ async function updatePages(token, password) {
             tmpMaxId = result.maxId;
         }
         minId = result.minId;
-        log(`p${i} toured.`);
+        semilog(`p${i} toured.`);
     }
     maxId = tmpMaxId;
     return 200;
@@ -320,7 +320,7 @@ async function rescue(period, token, password) {
             return;
         }
         if (result === 200) {
-            log('Rescurd.');
+            semilog('Rescurd.');
         }
         else {
             log(`${result}. Fail to rescue.`);

@@ -188,7 +188,7 @@ async function basicallyUpdateComments(id:number|string,reply:number,token:strin
     }
     const cid=Math.max(...data1.map(val=>Number(val.cid)))
     const timestamp=Math.max(...data1.map(val=>Number(val.timestamp)))
-    log(`cs${id} updated to c${cid} which is in ${prettyDate(timestamp)}.`)
+    semilog(`cs${id} updated to c${cid} which is in ${prettyDate(timestamp)}.`)
     return 200
 }
 async function updateComments(id:number|string,reply:number,token:string,password:string){
@@ -199,17 +199,17 @@ async function updateComments(id:number|string,reply:number,token:string,passwor
         }
         const result=await basicallyUpdateComments(id,reply,token,password)
         if(result===503){
-            log('503.')
+            semilog('503.')
             await sleep(config.congestionSleep)
             continue
         }
         if(result===500){
-            log('500.')
+            semilog('500.')
             await sleep(config.errSleep)
             continue
         }
         if(result===423){
-            log('423.')
+            semilog('423.')
             if(config.autoUnlock){
                 await unlock()
             }
@@ -240,7 +240,7 @@ async function basicallyUpdatePage(key:string,page:number|string,token:string,pa
         if(result.includes(401))return 401
         if(result.includes(403))return 403
         if(result.includes(500))return 500
-        log(`#${subIds.join(',')} toured.`)
+        semilog(`#${subIds.join(',')} toured.`)
         promises=[]
         subIds=[]
         await sleep(config.interval)
@@ -258,12 +258,12 @@ async function updatePage(key:string,page:number,token:string,password:string){
         }
         const result=await basicallyUpdatePage(key,page,token,password)
         if(result===503){
-            log('503.')
+            semilog('503.')
             await sleep(config.congestionSleep)
             continue
         }
         if(result===500){
-            log('500.')
+            semilog('500.')
             await sleep(config.errSleep)
             continue
         }
@@ -286,7 +286,7 @@ async function updatePages(token:string,password:string){
             tmpMaxId=result.maxId
         }
         minId=result.minId
-        log(`p${i} toured.`)
+        semilog(`p${i} toured.`)
     }
     maxId=tmpMaxId
     return 200
@@ -303,7 +303,7 @@ async function rescue(period:number,token:string,password:string){
             return
         }
         if(result===200){
-            log('Rescurd.')
+            semilog('Rescurd.')
         }else{
             log(`${result}. Fail to rescue.`)
         }
