@@ -18,9 +18,9 @@ exports.config = {
     errSleep: 1,
     recaptchaSleep: 10,
     timeout: 5,
-    interval: 1,
-    period: 10,
-    depth: 1,
+    stepSleep: 1,
+    interval: 10,
+    span: 60,
     autoUnlock: false,
     unlockingSleep: 10
 };

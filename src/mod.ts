@@ -36,7 +36,7 @@ function getDate(){
     const date=new Date()
     return [date.getMonth()+1,date.getDate()].map(val=>val.toString().padStart(2,'0')).join('-')+' '+[date.getHours(),date.getMinutes(),date.getSeconds()].map(val=>val.toString().padStart(2,'0')).join(':')+':'+date.getMilliseconds().toString().padStart(3,'0')
 }
-function semilog(msg:string|Error){
+function log(msg:string|Error){
     let string=getDate()+'  '
     if(typeof msg!=='string'){
         const {stack}=msg
@@ -49,11 +49,11 @@ function semilog(msg:string|Error){
         string+=msg
     }
     string=string.replace(/\n */g,'\n                    ')
-    fs.appendFileSync(path.join(__dirname,'../info/semilog.txt'),string+'\n\n')
+    fs.appendFileSync(path.join(__dirname,'../info/log.txt'),string+'\n\n')
     return string
 }
-function log(msg:string|Error){
-    const string=semilog(msg)
+function out(msg:string|Error){
+    const string=log(msg)
     console.log(string+'\n')
 }
 async function sleep(time:number){
@@ -116,11 +116,11 @@ async function basicallyGet(url:string,params:Record<string,string>={},cookie=''
                 })
             })
             res.on('error',err=>{
-                semilog(err)
+                log(err)
                 resolve(500)
             })
         }).on('error',err=>{
-            semilog(err)
+            log(err)
             resolve(500)
         })
     })
@@ -136,7 +136,7 @@ async function getResult(path:string,params:Record<string,string>={}){
         if(status===200)return {data:data}
         if(typeof status==='number')return status
     }catch(err){
-        semilog(err)
+        log(err)
     }
     return 500
 }
@@ -188,7 +188,7 @@ async function basicallyUpdateComments(id:number|string,reply:number,token:strin
     }
     const cid=Math.max(...data1.map(val=>Number(val.cid)))
     const timestamp=Math.max(...data1.map(val=>Number(val.timestamp)))
-    semilog(`cs${id} updated to c${cid} which is in ${prettyDate(timestamp)}.`)
+    log(`cs${id} updated to c${cid} which is in ${prettyDate(timestamp)}.`)
     return 200
 }
 async function updateComments(id:number|string,reply:number,token:string,password:string){
@@ -199,17 +199,17 @@ async function updateComments(id:number|string,reply:number,token:string,passwor
         }
         const result=await basicallyUpdateComments(id,reply,token,password)
         if(result===503){
-            semilog('503.')
+            log('503.')
             await sleep(config.congestionSleep)
             continue
         }
         if(result===500){
-            semilog('500.')
+            log('500.')
             await sleep(config.errSleep)
             continue
         }
         if(result===423){
-            semilog('423.')
+            log('423.')
             if(config.autoUnlock){
                 await unlock()
             }
@@ -240,14 +240,14 @@ async function basicallyUpdatePage(key:string,page:number|string,token:string,pa
         if(result.includes(401))return 401
         if(result.includes(403))return 403
         if(result.includes(500))return 500
-        semilog(`#${subIds.join(',')} toured.`)
+        log(`#${subIds.join(',')} toured.`)
         promises=[]
         subIds=[]
-        await sleep(config.interval)
+        await sleep(config.stepSleep)
     }
     return {
-        maxId:Number(data[0].pid),
-        minId:Number(data[data.length-1].pid)
+        maxTime:Number(data[0].timestamp),
+        minTime:Number(data[data.length-1].timestamp)
     }
 }
 async function updatePage(key:string,page:number,token:string,password:string){
@@ -258,12 +258,12 @@ async function updatePage(key:string,page:number,token:string,password:string){
         }
         const result=await basicallyUpdatePage(key,page,token,password)
         if(result===503){
-            semilog('503.')
+            log('503.')
             await sleep(config.congestionSleep)
             continue
         }
         if(result===500){
-            semilog('500.')
+            log('500.')
             await sleep(config.errSleep)
             continue
         }
@@ -273,39 +273,39 @@ async function updatePage(key:string,page:number,token:string,password:string){
     }
     return 500
 }
-let maxId=0
+let maxTime=Date.now()/1000
 async function updatePages(token:string,password:string){
-    let tmpMaxId=0
-    let minId=0
-    for(let i=1;i<=config.depth||minId+15*config.depth>maxId&&maxId!==0;i++){
-        const result=await updatePage('',i,token,password)
+    let tmpMaxTime=maxTime
+    let minTime=maxTime
+    for(let p=1;p<=100&&minTime+60*config.span>maxTime;p++){
+        const result=await updatePage('',p,token,password)
         if(result===401)return 401
         if(result===403)return 403
         if(result===500)return 500
-        if(i==0){
-            tmpMaxId=result.maxId
+        if(p==0){
+            tmpMaxTime=result.maxTime
         }
-        minId=result.minId
-        semilog(`p${i} toured.`)
+        minTime=result.minTime
+        log(`p${p} toured.`)
     }
-    maxId=tmpMaxId
+    maxTime=tmpMaxTime
     return 200
 }
 async function rescue(period:number,token:string,password:string){
     while(true){
         const result=await updatePages(token,password)
         if(result===401){
-            log('401.')
+            out('401.')
             return
         }
         if(result===403){
-            log('403.')
+            out('403.')
             return
         }
         if(result===200){
-            semilog('Rescurd.')
+            log('Rescurd.')
         }else{
-            log(`${result}. Fail to rescue.`)
+            out(`${result}. Fail to rescue.`)
         }
         await sleep(period*60)
     }
@@ -336,6 +336,6 @@ function prettyDate(stamp:string|number){
 }
 export async function main(){
     Object.assign(config,JSON.parse(fs.readFileSync(path.join(__dirname,'../config.json'),{encoding:'utf8'})))
-    const {token,password,period}=config
+    const {token,password,interval: period}=config
     await rescue(period,token,password)
 }
