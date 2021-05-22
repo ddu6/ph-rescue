@@ -287,11 +287,10 @@ async function updatePage(key, page, token, password) {
     }
     return 500;
 }
-let maxTime = Date.now() / 1000;
-async function updatePages(token, password) {
-    let tmpMaxTime = maxTime;
-    let minTime = maxTime;
-    for (let p = 1; p <= 100 && minTime + 60 * init_1.config.span > maxTime; p++) {
+async function updatePages(lastMaxTime, span, token, password) {
+    let maxTime = lastMaxTime;
+    let minTime = lastMaxTime;
+    for (let p = 1; p <= 100 && minTime + 60 * span >= lastMaxTime; p++) {
         const result = await updatePage('', p, token, password);
         if (result === 401)
             return 401;
@@ -299,18 +298,18 @@ async function updatePages(token, password) {
             return 403;
         if (result === 500)
             return 500;
-        if (p == 0) {
-            tmpMaxTime = result.maxTime;
+        if (p == 1) {
+            maxTime = result.maxTime;
         }
         minTime = result.minTime;
         log(`p${p} toured.`);
     }
-    maxTime = tmpMaxTime;
-    return 200;
+    return { maxTime };
 }
-async function rescue(period, token, password) {
+async function rescue(interval, span, token, password) {
+    let maxTime = Date.now() / 1000;
     while (true) {
-        const result = await updatePages(token, password);
+        const result = await updatePages(maxTime, span, token, password);
         if (result === 401) {
             out('401.');
             return;
@@ -319,13 +318,14 @@ async function rescue(period, token, password) {
             out('403.');
             return;
         }
-        if (result === 200) {
-            out('Rescurd.');
+        if (result === 500) {
+            out(`Fail to rescue under interval ${interval} and span ${span}.`);
         }
         else {
-            out(`${result}. Fail to rescue.`);
+            maxTime = result.maxTime;
+            out(`Rescurd under interval ${interval} and span ${span}.`);
         }
-        await sleep(period * 60);
+        await sleep(interval * 60);
     }
 }
 async function unlock() {
@@ -357,7 +357,12 @@ function prettyDate(stamp) {
 }
 async function main() {
     Object.assign(init_1.config, JSON.parse(fs.readFileSync(path.join(__dirname, '../config.json'), { encoding: 'utf8' })));
-    const { token, password, interval: period } = init_1.config;
-    await rescue(period, token, password);
+    const { token, password, schedules } = init_1.config;
+    const promises = [];
+    for (let i = 0; i < schedules.length; i++) {
+        const schedule = schedules[i];
+        promises.push(rescue(schedule.interval, schedule.span, token, password));
+    }
+    await Promise.all(promises);
 }
 exports.main = main;

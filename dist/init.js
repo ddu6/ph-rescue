@@ -13,8 +13,20 @@ exports.config = {
     token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     password: "xxxxxxxx",
     autoUnlock: false,
-    interval: 10,
-    span: 60,
+    schedules: [
+        {
+            interval: 1,
+            span: 0,
+        },
+        {
+            interval: 10,
+            span: 60,
+        },
+        {
+            interval: 300,
+            span: 600,
+        }
+    ],
     threads: 5,
     congestionSleep: 0.5,
     stepSleep: 1,
