@@ -303,7 +303,7 @@ async function rescue(period:number,token:string,password:string){
             return
         }
         if(result===200){
-            log('Rescurd.')
+            out('Rescurd.')
         }else{
             out(`${result}. Fail to rescue.`)
         }

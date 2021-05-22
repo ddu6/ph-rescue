@@ -320,7 +320,7 @@ async function rescue(period, token, password) {
             return;
         }
         if (result === 200) {
-            log('Rescurd.');
+            out('Rescurd.');
         }
         else {
             out(`${result}. Fail to rescue.`);
