@@ -298,7 +298,7 @@ async function updatePages(lastMaxTime, span, token, password) {
             return 403;
         if (result === 500)
             return 500;
-        if (p == 1) {
+        if (p === 1) {
             maxTime = result.maxTime;
         }
         minTime = result.minTime;
@@ -306,7 +306,7 @@ async function updatePages(lastMaxTime, span, token, password) {
     }
     return { maxTime };
 }
-async function rescue(interval, span, token, password) {
+async function cycle(interval, span, token, password) {
     let maxTime = Date.now() / 1000;
     while (true) {
         const result = await updatePages(maxTime, span, token, password);
@@ -361,7 +361,7 @@ async function main() {
     const promises = [];
     for (let i = 0; i < schedules.length; i++) {
         const schedule = schedules[i];
-        promises.push(rescue(schedule.interval, schedule.span, token, password));
+        promises.push(cycle(schedule.interval, schedule.span, token, password));
     }
     await Promise.all(promises);
 }
