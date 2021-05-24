@@ -9,21 +9,27 @@ export const config={
     token:"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     password:"xxxxxxxx",
     autoUnlock:false,
-    schedules:[
-        {
-            interval:1,
-            span:0,
-        },
-        {
-            interval:10,
-            span:60,
-        },
-        {
-            interval:300,
-            span:600,
-        }
+    rescuingHolesInterval:5,
+    rescuingCommentsInterval:30,
+    rescuingCommentsSpans:[
+        30,
+        300,
+        600,
+        1200,
+        1800,
+        3600,
+        7200,
+        43200,
+        86400,
+        172800,
+        604800,
     ],
-    threads:5,
+    updatingHolesSpans:[
+        600,
+        3600,
+        86400,
+        604800,
+    ],
     congestionSleep:0.5,
     stepSleep:1,
     errSleep:1,

@@ -155,13 +155,67 @@ async function basicallyGetLocalComments(id:number|string,token:string,password:
     })
     return data
 }
-async function basicallyGetPage(key:string,page:number|string,token:string,password:string){
-    const data:{data:HoleData[]}|number=await getResult(`p${page}`,{
+async function basicallyGetHole(id:number|string,token:string,password:string){
+    const data:{data:HoleData}|number=await getResult(`h${id}`,{
+        update:'',
+        token:token,
+        password:password
+    })
+    return data
+}
+async function basicallyGetPage(p:number|string,key:string,token:string,password:string){
+    const data:{data:HoleData[]}|number=await getResult(`p${p}`,{
         update:'',
         key:key,
         token:token,
         password:password
     })
+    return data
+}
+async function basicallyGetLocalPage(p:number|string,key:string,s:string,e:string,token:string,password:string){
+    const data:{data:HoleData[]}|number=await getResult(`local/p${p}`,{
+        key,
+        s,
+        e,
+        token,
+        password,
+    })
+    return data
+}
+async function getLocalPage(p:number|string,key:string,s:string,e:string,token:string,password:string){
+    for(let i=0;i<10;i++){
+        if(unlocking){
+            await sleep(config.recaptchaSleep)
+            continue
+        }
+        const result=await basicallyGetLocalPage(p,key,s,e,token,password)
+        if(result===503){
+            log('503.')
+            await sleep(config.congestionSleep)
+            continue
+        }
+        if(result===500){
+            log('500.')
+            await sleep(config.errSleep)
+            continue
+        }
+        if(result===401)return 401
+        if(result===403)return 403
+        if(typeof result==='number')return 500
+        return result
+    }
+    return 500
+}
+async function getLocalPages(key:string,s:string,e:string,token:string,password:string){
+    const data:HoleData[]=[]
+    for(let p=1;;p++){
+        const result=await getLocalPage(p,key,s,e,token,password)
+        if(result===401)return 401
+        if(result===403)return 403
+        if(result===500)return 500
+        data.push(...result.data)
+        if(result.data.length<50)break
+    }
     return data
 }
 async function basicallyUpdateComments(id:number|string,reply:number,token:string,password:string){
@@ -222,41 +276,69 @@ async function updateComments(id:number|string,reply:number,token:string,passwor
     }
     return 500
 }
-async function basicallyUpdatePage(key:string,page:number|string,token:string,password:string){
-    const result=await basicallyGetPage(key,page,token,password)
-    if(result===401)return 401
-    if(result===403)return 403
-    if(result===503)return 503
-    if(typeof result==='number')return 500
-    const data=result.data
-    let promises:Promise<200|401|403|500>[]=[]
-    let subIds:(number|string)[]=[]
-    for(let i=0;i<data.length;i++){
-        const {pid,reply}=data[i]
-        promises.push(updateComments(pid,Number(reply),token,password))
-        subIds.push(pid)
-        if(promises.length<config.threads&&i<data.length-1)continue
-        const result=await Promise.all(promises)
-        if(result.includes(401))return 401
-        if(result.includes(403))return 403
-        if(result.includes(500))return 500
-        log(`#${subIds.join(',')} toured.`)
-        promises=[]
-        subIds=[]
-        await sleep(config.stepSleep)
+async function basicallyUpdateHole(localData:HoleData,token:string,password:string){
+    if(Number(localData.timestamp)===0)return 404
+    if(Number(localData.hidden)===1)return 404
+    const result1=await basicallyGetHole(localData.pid,token,password)
+    if(result1===401)return 401
+    if(result1===403)return 403
+    if(result1===503)return 503
+    if(result1===404)return 404
+    if(typeof result1==='number')return 500
+    const data1=result1.data
+    const reply=Number(data1.reply)
+    const deltaComments=reply-Number(localData.reply)
+    const deltaLikes=Number(data1.likenum)-Number(localData.likenum)
+    if(
+        deltaComments>0
+        ||deltaLikes!==0
+    ){
+        out(`h${localData.pid} updated by ${deltaComments} comments and ${deltaLikes} likes.`)
     }
-    return {
-        maxTime:Number(data[0].timestamp),
-        minTime:Number(data[data.length-1].timestamp)
-    }
+    return await updateComments(localData.pid,reply,token,password)
 }
-async function updatePage(key:string,page:number,token:string,password:string){
+async function updateHole(localData:HoleData,token:string,password:string){
     for(let i=0;i<10;i++){
         if(unlocking){
             await sleep(config.recaptchaSleep)
             continue
         }
-        const result=await basicallyUpdatePage(key,page,token,password)
+        const result=await basicallyUpdateHole(localData,token,password)
+        if(result===503){
+            out('503.')
+            await sleep(config.congestionSleep)
+            continue
+        }
+        if(result===500){
+            out('500.')
+            await sleep(config.errSleep)
+            continue
+        }
+        if(result===401)return 401
+        if(result===403)return 403
+        return 200
+    }
+    return 500
+}
+async function basicallyUpdatePage(p:number|string,key:string,token:string,password:string){
+    const result=await basicallyGetPage(p,key,token,password)
+    if(result===401)return 401
+    if(result===403)return 403
+    if(result===503)return 503
+    if(typeof result==='number')return 500
+    const data=result.data
+    return {
+        maxTime:Number(data[0].timestamp),
+        minTime:Number(data[data.length-1].timestamp)
+    }
+}
+async function updatePage(p:number,key:string,token:string,password:string){
+    for(let i=0;i<10;i++){
+        if(unlocking){
+            await sleep(config.recaptchaSleep)
+            continue
+        }
+        const result=await basicallyUpdatePage(p,key,token,password)
         if(result===503){
             log('503.')
             await sleep(config.congestionSleep)
@@ -277,7 +359,7 @@ async function updatePages(lastMaxTime:number,span:number,token:string,password:
     let maxTime=lastMaxTime
     let minTime=lastMaxTime
     for(let p=1;p<=100&&minTime+60*span>=lastMaxTime;p++){
-        const result=await updatePage('',p,token,password)
+        const result=await updatePage(p,'',token,password)
         if(result===401)return 401
         if(result===403)return 403
         if(result===500)return 500
@@ -285,14 +367,13 @@ async function updatePages(lastMaxTime:number,span:number,token:string,password:
             maxTime=result.maxTime
         }
         minTime=result.minTime
-        log(`p${p} toured.`)
     }
     return {maxTime}
 }
-async function cycle(interval:number,span:number,token:string,password:string){
+async function rescueHoles(token:string,password:string){
     let maxTime=Date.now()/1000
     while(true){
-        const result=await updatePages(maxTime,span,token,password)
+        const result=await updatePages(maxTime,0,token,password)
         if(result===401){
             out('401.')
             return
@@ -302,12 +383,72 @@ async function cycle(interval:number,span:number,token:string,password:string){
             return
         }
         if(result===500){
-            out(`Fail to rescue under interval ${interval} and span ${span}.`)
+            out(`Fail to rescue holes after ${prettyDate(maxTime)}.`)
         }else{
             maxTime=result.maxTime
-            out(`Rescurd under interval ${interval} and span ${span}.`)
+            out(`Rescue holes after ${prettyDate(maxTime)}.`)
         }
-        await sleep(interval*60)
+        await sleep(config.rescuingHolesInterval)
+    }
+}
+async function rescueComments(token:string,password:string){
+    const interval=config.rescuingCommentsInterval
+    const spans=config.rescuingCommentsSpans
+    const strictSpans=config.updatingHolesSpans
+    let now=Date.now()/1000
+    let last=now-interval
+    while(true){
+        now=Date.now()/1000
+        let failed=false
+        for(let i=0;i<spans.length;i++){
+            const span=spans[i]
+            const e=now-span
+            const s=last-span
+            const result=await getLocalPages('',s.toString(),e.toString(),token,password)
+            if(result===401){
+                out('401.')
+                return
+            }
+            if(result===403){
+                out('403.')
+                return
+            }
+            if(result===500){
+                failed=true
+                out(`Fail to rescue comments between ${prettyDate(s)} and ${prettyDate(e)}.`)
+                break
+            }
+            const strict=strictSpans.includes(span)
+            for(let i=0;i<result.length;i++){
+                const item=result[i]
+                const id=Number(item.pid)
+                let result1:200|401|403|500
+                if(strict){
+                    result1=await updateHole(item,token,password)
+                }else{
+                    result1=await updateComments(id,Number(item.reply),token,password)
+                }
+                if(result1===401){
+                    out('401.')
+                    return
+                }
+                if(result1===403){
+                    out('403.')
+                    return
+                }
+                if(result1===500){
+                    failed=true
+                    out(`Fail to rescue comments between ${prettyDate(s)} and ${prettyDate(e)}.`)
+                    break
+                }
+            }
+            if(failed)break
+            out(`Rescue comments between ${prettyDate(s)} and ${prettyDate(e)}.`)
+        }
+        if(!failed){
+            last=now
+        }
+        await sleep(interval)
     }
 }
 async function unlock(){
@@ -336,11 +477,8 @@ function prettyDate(stamp:string|number){
 }
 export async function main(){
     Object.assign(config,JSON.parse(fs.readFileSync(path.join(__dirname,'../config.json'),{encoding:'utf8'})))
-    const {token,password,schedules}=config
+    const {token,password}=config
     const promises:Promise<void>[]=[]
-    for(let i=0;i<schedules.length;i++){
-        const schedule=schedules[i]
-        promises.push(cycle(schedule.interval,schedule.span,token,password))
-    }
+    promises.push(rescueHoles(token,password),rescueComments(token,password))
     await Promise.all(promises)
 }
