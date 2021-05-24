@@ -220,14 +220,16 @@ async function getLocalPages(key:string,s:string,e:string,token:string,password:
 }
 async function basicallyUpdateComments(id:number|string,reply:number,token:string,password:string){
     if(reply===0)return 200
-    const result0=await basicallyGetLocalComments(id,token,password)
-    if(result0===401)return 401
-    if(result0===403)return 403
-    if(result0===503)return 503
-    if(typeof result0==='number')return 500
-    const data0=result0.data
-    const length0=data0.length
-    if(reply>=0&&length0>=reply)return 200
+    if(reply>0){
+        const result0=await basicallyGetLocalComments(id,token,password)
+        if(result0===401)return 401
+        if(result0===403)return 403
+        if(result0===503)return 503
+        if(typeof result0==='number')return 500
+        const data0=result0.data
+        const length0=data0.length
+        if(length0>=reply)return 200
+    }
     const result1=await basicallyGetComments(id,token,password)
     if(result1===423)return 423
     if(result1===401)return 401
@@ -426,7 +428,7 @@ async function rescueComments(token:string,password:string){
                 if(strict){
                     result1=await updateHole(item,token,password)
                 }else{
-                    result1=await updateComments(id,Number(item.reply),token,password)
+                    result1=await updateComments(id,-1,token,password)
                 }
                 if(result1===401){
                     out('401.')
