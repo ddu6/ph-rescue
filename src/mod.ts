@@ -386,7 +386,7 @@ async function rescueHoles(token:string,password:string){
             out(`Fail to rescue holes after ${prettyDate(maxTime)}.`)
         }else{
             maxTime=result.maxTime
-            out(`Rescue holes after ${prettyDate(maxTime)}.`)
+            log(`Rescue holes after ${prettyDate(maxTime)}.`)
         }
         await sleep(config.rescuingHolesInterval)
     }
@@ -404,7 +404,6 @@ async function rescueComments(token:string,password:string){
             const span=spans[i]
             const e=now-span
             const s=last-span
-            console.log(e,s)
             const result=await getLocalPages('',s.toString(),e.toString(),token,password)
             if(result===401){
                 out('401.')
@@ -444,7 +443,7 @@ async function rescueComments(token:string,password:string){
                 }
             }
             if(failed)break
-            out(`Rescue comments between ${prettyDate(s)} and ${prettyDate(e)}.`)
+            log(`Rescue comments between ${prettyDate(s)} and ${prettyDate(e)}.`)
         }
         if(!failed){
             last=now
