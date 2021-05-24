@@ -423,15 +423,16 @@ async function rescueComments(token, password) {
     const interval = init_1.config.rescuingCommentsInterval;
     const spans = init_1.config.rescuingCommentsSpans;
     const strictSpans = init_1.config.updatingHolesSpans;
-    let now = Date.now() / 1000;
+    let now = Math.floor(Date.now() / 1000);
     let last = now - interval;
     while (true) {
-        now = Date.now() / 1000;
+        now = Math.floor(Date.now() / 1000);
         let failed = false;
         for (let i = 0; i < spans.length; i++) {
             const span = spans[i];
             const e = now - span;
             const s = last - span;
+            console.log(e, s);
             const result = await getLocalPages('', s.toString(), e.toString(), token, password);
             if (result === 401) {
                 out('401.');
@@ -491,7 +492,7 @@ async function unlock() {
     unlocking = false;
 }
 function prettyDate(stamp) {
-    const date = new Date(Number(stamp + '000'));
+    const date = new Date(Number(stamp) * 1000);
     const now = new Date();
     const year = date.getFullYear();
     const nowYear = now.getFullYear();
