@@ -293,7 +293,7 @@ async function basicallyUpdateHole(localData:HoleData,token:string,password:stri
         deltaComments>0
         ||deltaLikes!==0
     ){
-        out(`h${localData.pid} updated by ${deltaComments} comments and ${deltaLikes} likes.`)
+        log(`h${localData.pid} updated by ${deltaComments} comments and ${deltaLikes} likes.`)
     }
     return await updateComments(localData.pid,reply,token,password)
 }
