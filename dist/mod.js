@@ -477,7 +477,7 @@ async function rescueComments(token, password) {
             }
             if (failed)
                 break;
-            log(`Rescue comments between ${prettyDate(s)} and ${prettyDate(e)}.`);
+            log(`Rescue comments between ${prettyDate(s)} and ${prettyDate(e)} under span ${span}.`);
         }
         if (!failed) {
             last = now;
