@@ -389,8 +389,8 @@ async function rescueHoles(token:string,password:string){
         if(result===500){
             out(`Fail to rescue holes after ${prettyDate(maxTime)}.`)
         }else{
-            maxTime=result.maxTime
             log(`Rescue holes after ${prettyDate(maxTime)}.`)
+            maxTime=result.maxTime
         }
         await sleep(config.rescuingHolesInterval)
     }

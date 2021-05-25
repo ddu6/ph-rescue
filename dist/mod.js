@@ -417,8 +417,8 @@ async function rescueHoles(token, password) {
             out(`Fail to rescue holes after ${prettyDate(maxTime)}.`);
         }
         else {
-            maxTime = result.maxTime;
             log(`Rescue holes after ${prettyDate(maxTime)}.`);
+            maxTime = result.maxTime;
         }
         await sleep(init_1.config.rescuingHolesInterval);
     }
