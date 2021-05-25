@@ -51,7 +51,7 @@ function log(msg:string|Error){
     }
     string=string.replace(/\n */g,'\n                    ')
     const date=new Date()
-    fs.appendFileSync(path.join(__dirname,`../info/log ${dateStr}.txt`),string+'\n\n')
+    fs.appendFileSync(path.join(__dirname,`../info/log ${dateStr.split(' ')[0]}.txt`),string+'\n\n')
     return string
 }
 function out(msg:string|Error){
