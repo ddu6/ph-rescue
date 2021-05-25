@@ -13,8 +13,9 @@ exports.config = {
     token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     password: "xxxxxxxx",
     autoUnlock: false,
-    rescuingHolesInterval: 5,
+    rescuingHolesInterval: 10,
     rescuingCommentsInterval: 30,
+    restartingBound: 60,
     rescuingCommentsSpans: [
         30,
         300,
@@ -34,6 +35,7 @@ exports.config = {
         86400,
         604800,
     ],
+    failureLimit: 10,
     congestionSleep: 0.5,
     stepSleep: 1,
     errSleep: 1,

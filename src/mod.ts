@@ -183,7 +183,7 @@ async function basicallyGetLocalPage(p:number|string,key:string,s:string,e:strin
     return data
 }
 async function getLocalPage(p:number|string,key:string,s:string,e:string,token:string,password:string){
-    for(let i=0;i<10;i++){
+    for(let i=0;i<config.failureLimit;i++){
         if(unlocking){
             await sleep(config.recaptchaSleep)
             continue
@@ -250,7 +250,7 @@ async function basicallyUpdateComments(id:number|string,reply:number,token:strin
     return 200
 }
 async function updateComments(id:number|string,reply:number,token:string,password:string){
-    for(let i=0;i<10;i++){
+    for(let i=0;i<config.failureLimit;i++){
         if(unlocking){
             await sleep(config.recaptchaSleep)
             continue
@@ -302,7 +302,7 @@ async function basicallyUpdateHole(localData:HoleData,token:string,password:stri
     return await updateComments(localData.pid,reply,token,password)
 }
 async function updateHole(localData:HoleData,token:string,password:string){
-    for(let i=0;i<10;i++){
+    for(let i=0;i<config.failureLimit;i++){
         if(unlocking){
             await sleep(config.recaptchaSleep)
             continue
@@ -337,7 +337,7 @@ async function basicallyUpdatePage(p:number|string,key:string,token:string,passw
     }
 }
 async function updatePage(p:number,key:string,token:string,password:string){
-    for(let i=0;i<10;i++){
+    for(let i=0;i<config.failureLimit;i++){
         if(unlocking){
             await sleep(config.recaptchaSleep)
             continue
@@ -375,7 +375,7 @@ async function updatePages(lastMaxTime:number,span:number,token:string,password:
     return {maxTime}
 }
 async function rescueHoles(token:string,password:string){
-    let maxTime=Date.now()/1000
+    let maxTime=Math.floor(Date.now()/1000)-config.restartingBound
     while(true){
         const result=await updatePages(maxTime,0,token,password)
         if(result===401){
@@ -400,7 +400,7 @@ async function rescueComments(token:string,password:string){
     const spans=config.rescuingCommentsSpans
     const strictSpans=config.updatingHolesSpans
     let now=Math.floor(Date.now()/1000)
-    let last=now-interval
+    let last=now-interval-config.restartingBound
     while(true){
         now=Math.floor(Date.now()/1000)
         let failed=false
