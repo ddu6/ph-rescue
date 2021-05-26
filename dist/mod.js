@@ -491,9 +491,8 @@ async function unlock() {
     if (unlocking)
         return;
     unlocking = true;
-    const cp = await open('https://pkuhelper.pku.edu.cn/hole');
+    await open('https://pkuhelper.pku.edu.cn/hole');
     await sleep(init_1.config.unlockingSleep);
-    cp.kill();
     unlocking = false;
 }
 function prettyDate(stamp) {

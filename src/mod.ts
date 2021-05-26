@@ -460,9 +460,8 @@ async function rescueComments(token:string,password:string){
 async function unlock(){
     if(unlocking)return
     unlocking=true
-    const cp=await open('https://pkuhelper.pku.edu.cn/hole')
+    await open('https://pkuhelper.pku.edu.cn/hole')
     await sleep(config.unlockingSleep)
-    cp.kill()
     unlocking=false
 }
 function prettyDate(stamp:string|number){
