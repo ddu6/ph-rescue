@@ -6,7 +6,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const init_1 = require("./init");
-const open = require("open");
+const playwright_chromium_1 = require("playwright-chromium");
 let unlocking = false;
 function getDate() {
     const date = new Date();
@@ -491,8 +491,23 @@ async function unlock() {
     if (unlocking)
         return;
     unlocking = true;
-    await open('https://pkuhelper.pku.edu.cn/hole');
+    const browser = await playwright_chromium_1.chromium.launch();
+    const context = await browser.newContext({ storageState: { origins: [{
+                    origin: 'https://pkuhelper.pku.edu.cn',
+                    localStorage: [{
+                            name: 'TOKEN',
+                            value: init_1.config.token
+                        }]
+                }] } });
+    const page = await context.newPage();
+    try {
+        await page.goto('https://pkuhelper.pku.edu.cn/hole', { timeout: init_1.config.unlockingSleep });
+    }
+    catch (err) {
+        log(err);
+    }
     await sleep(init_1.config.unlockingSleep);
+    await browser.close();
     unlocking = false;
 }
 function prettyDate(stamp) {

@@ -3,7 +3,7 @@ import * as http from 'http'
 import * as fs from 'fs'
 import * as path from 'path'
 import {config} from './init'
-import * as open from 'open'
+import {chromium} from 'playwright-chromium'
 let unlocking=false
 interface Res{
     body:string
@@ -460,8 +460,22 @@ async function rescueComments(token:string,password:string){
 async function unlock(){
     if(unlocking)return
     unlocking=true
-    await open('https://pkuhelper.pku.edu.cn/hole')
+    const browser=await chromium.launch()
+    const context=await browser.newContext({storageState:{origins:[{
+        origin:'https://pkuhelper.pku.edu.cn',
+        localStorage:[{
+            name:'TOKEN',
+            value:config.token
+        }]
+    }]}})
+    const page=await context.newPage()
+    try{
+        await page.goto('https://pkuhelper.pku.edu.cn/hole',{timeout:config.unlockingSleep})
+    }catch(err){
+        log(err)
+    }
     await sleep(config.unlockingSleep)
+    await browser.close()
     unlocking=false
 }
 function prettyDate(stamp:string|number){

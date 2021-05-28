@@ -20,6 +20,6 @@
     "@types/node": "^14.14.31"
   },
   "dependencies": {
-    "open": "^8.0.9"
+    "playwright-chromium": "^1.11.1"
   }
 }
