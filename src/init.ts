@@ -8,7 +8,7 @@ import * as path from 'path'
 export const config={
     token:"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     password:"xxxxxxxx",
-    autoUnlock:false,
+    autoUnlock:true,
     rescuingHolesInterval:10,
     rescuingCommentsInterval:60,
     restartingDuration:60,

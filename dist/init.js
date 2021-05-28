@@ -12,7 +12,7 @@ const path = require("path");
 exports.config = {
     token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     password: "xxxxxxxx",
-    autoUnlock: false,
+    autoUnlock: true,
     rescuingHolesInterval: 10,
     rescuingCommentsInterval: 60,
     restartingDuration: 60,
