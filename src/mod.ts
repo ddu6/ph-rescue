@@ -470,7 +470,7 @@ async function unlock(){
     }]}})
     const page=await context.newPage()
     try{
-        await page.goto('https://pkuhelper.pku.edu.cn/hole',{timeout:config.unlockingSleep})
+        await page.goto('https://pkuhelper.pku.edu.cn/hole',{timeout:config.unlockingSleep*1000})
     }catch(err){
         log(err)
     }
