@@ -377,7 +377,7 @@ async function updatePages(lastMaxTime:number,span:number,token:string,password:
     return {maxTime}
 }
 async function rescueHoles(token:string,password:string){
-    let maxTime=Math.floor(Date.now()/1000)-config.restartingBound
+    let maxTime=Math.floor(Date.now()/1000)-config.restartingDuration
     while(true){
         const result=await updatePages(maxTime,0,token,password)
         if(result===401){
@@ -402,7 +402,7 @@ async function rescueComments(token:string,password:string){
     const spans=config.rescuingCommentsSpans
     const strictSpans=config.updatingHolesSpans
     let now=Math.floor(Date.now()/1000)
-    let last=now-interval-config.restartingBound
+    let last=now-interval-config.restartingDuration
     while(true){
         now=Math.floor(Date.now()/1000)
         let failed=false

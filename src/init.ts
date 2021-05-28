@@ -11,7 +11,7 @@ export const config={
     autoUnlock:false,
     rescuingHolesInterval:10,
     rescuingCommentsInterval:60,
-    restartingBound:60,
+    restartingDuration:60,
     rescuingCommentsSpans:[
         600,
         1800,
