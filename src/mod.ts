@@ -363,7 +363,7 @@ async function updatePage(p:number,key:string,token:string,password:string){
 }
 async function updatePages(lastMaxTime:number,span:number,token:string,password:string){
     let maxTime=lastMaxTime
-    let minTime=0
+    let minTime=lastMaxTime
     for(let p=1;p<=100&&minTime+span>=lastMaxTime;p++){
         const result=await updatePage(p,'',token,password)
         if(result===401)return 401

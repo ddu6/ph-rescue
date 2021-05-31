@@ -387,7 +387,7 @@ async function updatePage(p, key, token, password) {
 }
 async function updatePages(lastMaxTime, span, token, password) {
     let maxTime = lastMaxTime;
-    let minTime = 0;
+    let minTime = lastMaxTime;
     for (let p = 1; p <= 100 && minTime + span >= lastMaxTime; p++) {
         const result = await updatePage(p, '', token, password);
         if (result === 401)
