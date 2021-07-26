@@ -4,9 +4,10 @@
     "start": "node dist/main.js"
   },
   "devDependencies": {
-    "@types/node": "^15.12.2"
+    "@types/node": "^16.4.3"
   },
   "dependencies": {
-    "playwright-chromium": "^1.12.1"
+    "@ddu6/cli-tools": "^0.0.2",
+    "playwright-chromium": "^1.13.0"
   }
 }

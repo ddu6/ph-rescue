@@ -33,9 +33,13 @@ exports.config = {
     errSleep: 1,
     recaptchaSleep: 10,
     unlockingSleep: 10,
-    timeout: 5,
+    requestTimeout: 5,
     base: "https://ddu6.xyz/services/ph-get/",
 };
 const path0 = path.join(__dirname, '../config.json');
-if (!fs.existsSync(path0))
-    fs.writeFileSync(path0, JSON.stringify(exports.config, null, 4));
+if (!fs.existsSync(path0)) {
+    fs.writeFileSync(path0, JSON.stringify(exports.config, undefined, 4));
+}
+else {
+    Object.assign(exports.config, JSON.parse(fs.readFileSync(path0, { encoding: 'utf8' })));
+}
