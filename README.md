@@ -9,9 +9,6 @@ git clone https://github.com/ddu6/ph-rescue.git
 cd ph-rescue
 ```
 ```
-npm install
-```
-```
 npm run init
 ```
 Fill in `config.json`.

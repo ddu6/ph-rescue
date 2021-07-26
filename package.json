@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "init": "node dist/init.js",
+    "init": "npm i && node dist/init.js",
     "start": "node dist/main.js"
   },
   "devDependencies": {
@@ -9,5 +9,9 @@
   "dependencies": {
     "@ddu6/cli-tools": "^0.0.2",
     "playwright-chromium": "^1.13.0"
+  },
+  "engines": {
+    "node": "^14.0.0",
+    "npm": "^7.0.0"
   }
 }
