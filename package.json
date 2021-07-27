@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "init": "npm i && node dist/init.js",
+    "postinstall": "node dist/init.js",
     "start": "node dist/main.js"
   },
   "devDependencies": {

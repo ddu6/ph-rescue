@@ -9,11 +9,11 @@ git clone https://github.com/ddu6/ph-rescue.git
 cd ph-rescue
 ```
 ```
-npm run init
+npm i
 ```
 Fill in `config.json`.
 
 ## Start
 ```
-npm run start
+nohup npm start &
 ```
