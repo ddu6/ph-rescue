@@ -1,9 +1,10 @@
-# PKU Hole Rescuer
-- Require [nodejs](https://nodejs.org/).
+# PH Rescue
+- Require [git](https://git-scm.com).
+- Require [nodejs](https://nodejs.org).
 
 ## Install
 ```
-git clone https://github.com/ddu6/ph-rescue.git
+git clone https://github.com/pkuh6/ph-rescue.git
 ```
 ```
 cd ph-rescue
