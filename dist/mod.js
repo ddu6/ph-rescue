@@ -456,17 +456,17 @@ async function unlock() {
     unlocking = false;
 }
 function prettyDate(stamp) {
-    const date = new Date(Number(stamp) * 1000);
+    const date = new Date(Number(stamp + '000'));
     const now = new Date();
     const year = date.getFullYear();
     const nowYear = now.getFullYear();
-    const md = (date.getMonth() + 1) + '/' +
-        date.getDate();
-    const nowMD = (now.getMonth() + 1) + '/' +
-        now.getDate();
-    const hms = date.getHours() + ':' +
-        date.getMinutes() + ':' +
-        date.getSeconds();
+    const md = (date.getMonth() + 1)
+        + '/' + date.getDate();
+    const nowMD = (now.getMonth() + 1)
+        + '/' + now.getDate();
+    const hms = date.getHours()
+        + ':' + date.getMinutes()
+        + ':' + date.getSeconds();
     if (year !== nowYear) {
         return hms + ' ' + year + '/' + md;
     }
