@@ -84,12 +84,12 @@ async function getLocalPage(p, key, s, e, token, password) {
         }
         const result = await basicallyGetLocalPage(p, key, s, e, token, password);
         if (result === 503) {
-            clit.log('503.');
+            clit.log('503');
             await sleep(init_1.config.congestionSleep);
             continue;
         }
         if (result === 500) {
-            clit.log('500.');
+            clit.log('500');
             await sleep(init_1.config.errSleep);
             continue;
         }
@@ -179,7 +179,7 @@ async function basicallyUpdateComments(id, reply, token, password) {
     if (data1.length > 0) {
         const cid = Math.max(...data1.map(val => Number(val.cid)));
         const timestamp = Math.max(...data1.map(val => Number(val.timestamp)));
-        clit.log(`cs${id} updated to c${cid} which is in ${prettyDate(timestamp)}.`);
+        clit.log(`cs${id} updated to c${cid} which is in ${prettyTimestamp(timestamp)}`);
     }
     return 200;
 }
@@ -191,17 +191,17 @@ async function updateComments(id, reply, token, password) {
         }
         const result = await basicallyUpdateComments(id, reply, token, password);
         if (result === 503) {
-            clit.log('503.');
+            clit.log('503');
             await sleep(init_1.config.congestionSleep);
             continue;
         }
         if (result === 500) {
-            clit.log('500.');
+            clit.log('500');
             await sleep(init_1.config.errSleep);
             continue;
         }
         if (result === 423) {
-            clit.log('423.');
+            clit.log('423');
             if (init_1.config.autoUnlock) {
                 await unlock();
             }
@@ -247,7 +247,7 @@ async function basicallyUpdateHole(localData, token, password) {
     const deltaLikes = Number(data1.likenum) - Number(localData.likenum);
     if (deltaComments > 0
         || deltaLikes !== 0) {
-        clit.log(`h${localData.pid} updated by ${deltaComments} comments and ${deltaLikes} likes.`);
+        clit.log(`h${localData.pid} updated by ${deltaComments} comments and ${deltaLikes} likes`);
     }
     return await updateComments(localData.pid, reply, token, password);
 }
@@ -259,12 +259,12 @@ async function updateHole(localData, token, password) {
         }
         const result = await basicallyUpdateHole(localData, token, password);
         if (result === 503) {
-            clit.out('503.');
+            clit.out('503');
             await sleep(init_1.config.congestionSleep);
             continue;
         }
         if (result === 500) {
-            clit.out('500.');
+            clit.out('500');
             await sleep(init_1.config.errSleep);
             continue;
         }
@@ -306,12 +306,12 @@ async function updatePage(p, key, token, password) {
         }
         const result = await basicallyUpdatePage(p, key, token, password);
         if (result === 503) {
-            clit.log('503.');
+            clit.log('503');
             await sleep(init_1.config.congestionSleep);
             continue;
         }
         if (result === 500) {
-            clit.log('500.');
+            clit.log('500');
             await sleep(init_1.config.errSleep);
             continue;
         }
@@ -351,18 +351,18 @@ async function rescueHoles(token, password) {
     while (true) {
         const result = await updatePages(maxTime, 0, token, password);
         if (result === 401) {
-            clit.out('401.');
+            clit.out('401');
             return;
         }
         if (result === 403) {
-            clit.out('403.');
+            clit.out('403');
             return;
         }
         if (result === 500) {
-            clit.out(`Fail to rescue holes after ${prettyDate(maxTime)}.`);
+            clit.out(`Fail to rescue holes after ${prettyTimestamp(maxTime)}`);
         }
         else {
-            clit.log(`Rescue holes after ${prettyDate(maxTime)}.`);
+            clit.log(`Rescue holes after ${prettyTimestamp(maxTime)}`);
             maxTime = result.maxTime;
         }
         await sleep(init_1.config.rescuingHolesInterval);
@@ -383,16 +383,16 @@ async function rescueComments(token, password) {
             const s = last - span;
             const result = await getLocalPages('', s.toString(), e.toString(), token, password);
             if (result === 401) {
-                clit.out('401.');
+                clit.out('401');
                 return;
             }
             if (result === 403) {
-                clit.out('403.');
+                clit.out('403');
                 return;
             }
             if (result === 500) {
                 failed = true;
-                clit.out(`Fail to rescue comments between ${prettyDate(s)} and ${prettyDate(e)}.`);
+                clit.out(`Fail to rescue comments between ${prettyTimestamp(s)} and ${prettyTimestamp(e)}`);
                 break;
             }
             const strict = strictSpans.includes(span);
@@ -407,23 +407,23 @@ async function rescueComments(token, password) {
                     result1 = await updateComments(id, -1, token, password);
                 }
                 if (result1 === 401) {
-                    clit.out('401.');
+                    clit.out('401');
                     return;
                 }
                 if (result1 === 403) {
-                    clit.out('403.');
+                    clit.out('403');
                     return;
                 }
                 if (result1 === 500) {
                     failed = true;
-                    clit.out(`Fail to rescue comments between ${prettyDate(s)} and ${prettyDate(e)}.`);
+                    clit.out(`Fail to rescue comments between ${prettyTimestamp(s)} and ${prettyTimestamp(e)}`);
                     break;
                 }
             }
             if (failed) {
                 break;
             }
-            clit.log(`Rescue comments between ${prettyDate(s)} and ${prettyDate(e)} under span ${span}.`);
+            clit.log(`Rescue comments between ${prettyTimestamp(s)} and ${prettyTimestamp(e)} under span ${span}`);
         }
         if (!failed) {
             last = now;
@@ -455,25 +455,23 @@ async function unlock() {
     await browser.close();
     unlocking = false;
 }
-function prettyDate(stamp) {
+function prettyTimestamp(stamp) {
     const date = new Date(Number(stamp + '000'));
-    const now = new Date();
-    const year = date.getFullYear();
-    const nowYear = now.getFullYear();
-    const md = (date.getMonth() + 1)
-        + '/' + date.getDate();
-    const nowMD = (now.getMonth() + 1)
-        + '/' + now.getDate();
-    const hms = date.getHours()
-        + ':' + date.getMinutes()
-        + ':' + date.getSeconds();
-    if (year !== nowYear) {
-        return hms + ' ' + year + '/' + md;
-    }
-    if (nowMD !== md) {
-        return hms + ' ' + md;
-    }
-    return hms;
+    return [
+        date.getHours(),
+        date.getMinutes(),
+        date.getSeconds(),
+    ]
+        .map(val => val.toString().padStart(2, '0'))
+        .join(':')
+        + ' '
+        + [
+            date.getMonth() + 1,
+            date.getDate(),
+            date.getFullYear(),
+        ]
+            .map(val => val.toString().padStart(2, '0'))
+            .join('/');
 }
 async function main() {
     const { token, password } = init_1.config;
