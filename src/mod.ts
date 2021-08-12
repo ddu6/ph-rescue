@@ -29,7 +29,7 @@ async function sleep(time:number){
     })
 }
 async function get(path:string,params:Record<string,string>={}){
-    const result=await clit.request(`${config.base}${path}`,params)
+    const result=await clit.request(`https://${config.domain}/phs/${path}`,params)
     if(typeof result==='number'){
         return result
     }

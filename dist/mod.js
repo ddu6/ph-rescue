@@ -12,7 +12,7 @@ async function sleep(time) {
     });
 }
 async function get(path, params = {}) {
-    const result = await clit.request(`${init_1.config.base}${path}`, params);
+    const result = await clit.request(`https://${init_1.config.domain}/phs/${path}`, params);
     if (typeof result === 'number') {
         return result;
     }

@@ -10,6 +10,7 @@ const path = require("path");
         fs.mkdirSync(val);
 });
 exports.config = {
+    domain: "example.com",
     token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     password: "xxxxxxxx",
     autoUnlock: true,
@@ -34,7 +35,6 @@ exports.config = {
     recaptchaSleep: 10,
     unlockingSleep: 10,
     requestTimeout: 5,
-    base: "https://ddu6.xyz/services/ph-get/",
 };
 const path0 = path.join(__dirname, '../config.json');
 if (!fs.existsSync(path0)) {

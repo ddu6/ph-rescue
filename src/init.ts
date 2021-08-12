@@ -6,6 +6,7 @@ import * as path from 'path'
     if(!fs.existsSync(val))fs.mkdirSync(val)
 })
 export const config={
+    domain:"example.com",
     token:"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     password:"xxxxxxxx",
     autoUnlock:true,
@@ -30,7 +31,6 @@ export const config={
     recaptchaSleep:10,
     unlockingSleep:10,
     requestTimeout:5,
-    base:"https://ddu6.xyz/services/ph-get/",
 }
 const path0=path.join(__dirname,'../config.json')
 if(!fs.existsSync(path0)){
