@@ -34,7 +34,7 @@ exports.config = {
     errSleep: 1,
     recaptchaSleep: 10,
     unlockingSleep: 10,
-    requestTimeout: 5,
+    requestTimeout: 10,
 };
 const path0 = path.join(__dirname, '../config.json');
 if (!fs.existsSync(path0)) {
