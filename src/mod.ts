@@ -365,7 +365,7 @@ async function updatePages(lastMaxTime:number,span:number,token:string,password:
     return {maxTime}
 }
 async function rescueHoles(token:string,password:string){
-    let maxTime=Math.floor(Date.now()/1000)-config.restartingDuration
+    let maxTime=Math.floor(Date.now()/1000)-config.restartDuration
     while(true){
         const result=await updatePages(maxTime,0,token,password)
         if(result===401){
@@ -382,69 +382,59 @@ async function rescueHoles(token:string,password:string){
             clit.log(`Rescue holes after ${prettyTimestamp(maxTime)}`)
             maxTime=result.maxTime
         }
-        await sleep(config.rescuingHolesInterval)
+        await sleep(config.rescueHolesInterval)
     }
 }
 async function rescueComments(token:string,password:string){
-    const interval=config.rescuingCommentsInterval
-    const spans=config.rescuingCommentsSpans
-    const strictSpans=config.updatingHolesSpans
-    let now=Math.floor(Date.now()/1000)
-    let last=now-interval-config.restartingDuration
+    let last=Math.floor(Date.now()/1000)-config.rescueCommentsInterval-config.restartDuration
     while(true){
-        now=Math.floor(Date.now()/1000)
-        let failed=false
-        for(let i=0;i<spans.length;i++){
-            const span=spans[i]
-            const e=now-span
-            const s=last-span
-            const result=await getLocalPages('',s.toString(),e.toString(),token,password)
-            if(result===401){
-                clit.out('401')
-                return
-            }
-            if(result===403){
-                clit.out('403')
-                return
-            }
-            if(result===500){
-                failed=true
-                clit.out(`Fail to rescue comments between ${prettyTimestamp(s)} and ${prettyTimestamp(e)}`)
-                break
-            }
-            const strict=strictSpans.includes(span)
-            for(let i=0;i<result.length;i++){
-                const item=result[i]
-                const id=Number(item.pid)
-                let result1:200|401|403|500
-                if(strict){
-                    result1=await updateHole(item,token,password)
-                }else{
-                    result1=await updateComments(id,-1,token,password)
-                }
-                if(result1===401){
+        const now=Math.floor(Date.now()/1000)
+        normal:{
+            for(let i=0;i<config.rescueCommentsSpans.length;i++){
+                const span=config.rescueCommentsSpans[i]
+                const e=now-span
+                const s=last-span
+                const result=await getLocalPages('',s.toString(),e.toString(),token,password)
+                if(result===401){
                     clit.out('401')
                     return
                 }
-                if(result1===403){
+                if(result===403){
                     clit.out('403')
                     return
                 }
-                if(result1===500){
-                    failed=true
+                if(result===500){
                     clit.out(`Fail to rescue comments between ${prettyTimestamp(s)} and ${prettyTimestamp(e)}`)
-                    break
+                    break normal
                 }
+                const strict=config.updateHolesSpans.includes(span)
+                for(let i=0;i<result.length;i++){
+                    const item=result[i]
+                    const id=Number(item.pid)
+                    let result1:200|401|403|500
+                    if(strict){
+                        result1=await updateHole(item,token,password)
+                    }else{
+                        result1=await updateComments(id,-1,token,password)
+                    }
+                    if(result1===401){
+                        clit.out('401')
+                        return
+                    }
+                    if(result1===403){
+                        clit.out('403')
+                        return
+                    }
+                    if(result1===500){
+                        clit.out(`Fail to rescue comments between ${prettyTimestamp(s)} and ${prettyTimestamp(e)}`)
+                        break normal
+                    }
+                }
+                clit.log(`Rescue comments between ${prettyTimestamp(s)} and ${prettyTimestamp(e)} under span ${span}`)
             }
-            if(failed){
-                break
-            }
-            clit.log(`Rescue comments between ${prettyTimestamp(s)} and ${prettyTimestamp(e)} under span ${span}`)
-        }
-        if(!failed){
             last=now
         }
-        await sleep(interval)
+        await sleep(config.rescueCommentsInterval)
     }
 }
 async function unlock(){
@@ -462,11 +452,11 @@ async function unlock(){
     }]}})
     const page=await context.newPage()
     try{
-        await page.goto('https://pkuhelper.pku.edu.cn/hole',{timeout:config.unlockingSleep*1000})
+        await page.goto('https://pkuhelper.pku.edu.cn/hole',{timeout:config.unlockSleep*1000})
     }catch(err){
         clit.log(err)
     }
-    await sleep(config.unlockingSleep)
+    await sleep(config.unlockSleep)
     await browser.close()
     unlocking=false
 }

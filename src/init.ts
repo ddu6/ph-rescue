@@ -1,40 +1,40 @@
-import * as fs from 'fs'
-import * as path from 'path'
+import {existsSync,mkdirSync,writeFileSync,readFileSync} from 'fs'
+import {join} from 'path'
 [
     '../info/'
-].map(val=>path.join(__dirname,val)).forEach(val=>{
-    if(!fs.existsSync(val))fs.mkdirSync(val)
+].map(val=>join(__dirname,val)).forEach(val=>{
+    if(!existsSync(val)){
+        mkdirSync(val)
+    }
 })
 export const config={
     domain:"example.com",
     token:"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     password:"xxxxxxxx",
     autoUnlock:true,
-    rescuingHolesInterval:10,
-    rescuingCommentsInterval:60,
-    restartingDuration:60,
-    rescuingCommentsSpans:[
+    rescueHolesInterval:10,
+    rescueCommentsInterval:60,
+    restartDuration:60,
+    rescueCommentsSpans:[
         600,
-        1800,
         3600,
-        43200,
-        604800,
+        86400,
     ],
-    updatingHolesSpans:[
+    updateHolesSpans:[
         3600,
-        604800,
+        86400,
     ],
     failureLimit:10,
     congestionSleep:0.5,
     stepSleep:1,
     errSleep:1,
     recaptchaSleep:10,
-    unlockingSleep:10,
+    unlockSleep:10,
     requestTimeout:10,
 }
-const path0=path.join(__dirname,'../config.json')
-if(!fs.existsSync(path0)){
-    fs.writeFileSync(path0,JSON.stringify(config,undefined,4))
+const path=join(__dirname,'../config.json')
+if(!existsSync(path)){
+    writeFileSync(path,JSON.stringify(config,undefined,4))
 }else{
-    Object.assign(config,JSON.parse(fs.readFileSync(path0,{encoding:'utf8'})))
+    Object.assign(config,JSON.parse(readFileSync(path,{encoding:'utf8'})))
 }

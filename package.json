@@ -4,7 +4,7 @@
     "start": "node dist/main.js"
   },
   "devDependencies": {
-    "@types/node": "^16.7.1"
+    "@types/node": "^16.7.4"
   },
   "dependencies": {
     "@ddu6/cli-tools": "^0.0.7",
